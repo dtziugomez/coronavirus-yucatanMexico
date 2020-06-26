@@ -4,8 +4,10 @@
 	"description": "This is a boilerplate of an Apify actor.",
 	"dependencies": {
 		"apify": "^0.20.0",
+		"node-fetch": "^2.6.0",
 		"request": "^2.88.2",
-		"request-promise": "^4.2.5"
+		"request-promise": "^4.2.5",
+		"xmlhttprequest": "^1.8.0"
 	},
 	"devDependencies": {
 		"@apify/eslint-config": "0.0.3",
