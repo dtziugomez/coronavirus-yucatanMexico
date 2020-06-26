@@ -1,17 +1,5 @@
 const Apify = require("apify");
 const rp = require("request-promise");
-const confirmados = [];
-const confirmadosxMunicipio = [];
-const res = {};
-res.State = {};
-res.country = "Mexico";
-res.sourceUrl = "https://coronavirus.gob.mx/datos/";
-res.README = "https://apify.com/puorc/mexico-covid19?utm_source=app";
-res.historyData =
-  "https://api.apify.com/v2/datasets/4efvuMEdxdQPCreW7/items?format=json&clean=1";
-const kvStore = await Apify.openKeyValueStore("COVID-19-MEXICO");
-const dataset = await Apify.openDataset("COVID-19-MEXICO-HISTORY");
-
 const municipiosData = [
   {
     clave: "16046",
@@ -9845,8 +9833,17 @@ const municipiosData = [
 const municipios = municipiosData.filter(municipio =>
   municipio.nombre.includes("Yucatan")
 );
-
 Apify.main(async () => {
+  const res = {};
+  res.State = {};
+
+  const confirmados = [];
+  const confirmadosxMunicipio = [];
+
+  const kvStore = await Apify.openKeyValueStore("COVID-19-MEXICO");
+  const dataset = await Apify.openDataset("COVID-19-MEXICO-HISTORY");
+
+  // Find total
   const infectedOptions = {
     method: "POST",
     uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
@@ -9867,6 +9864,7 @@ Apify.main(async () => {
     const TotalMun = /TotalMun/;
 
     const ATotalMun = TotalMun.exec(st);
+
     if (ATotalMun != null) {
       confirmados.push(ATotalMun);
     }
@@ -9888,9 +9886,7 @@ Apify.main(async () => {
   });
 
   const estadisticas = [];
-  function isMunicipio(municipio, confirmado) {
-    return municipio.clave === confirmado.clave;
-  }
+
   municipios.forEach(municipio => {
     let confirm = confirmadosxMunicipio.find(
       elemento => elemento.clave === municipio.clave
@@ -9902,9 +9898,13 @@ Apify.main(async () => {
       confirmados: confirm ? confirm.cantidad : confirm
     });
   });
-  
-  console.log(estadisticas);
+
+  // try to discover updated date
+
+  // validate result
+  res.State = estadisticas;
   await Apify.setValue("LATEST", res);
   await kvStore.setValue("LATEST", res);
   await dataset.pushData(res);
+  console.log(res);
 });
