@@ -9894,7 +9894,7 @@ Apify.main(async () => {
     if (!confirm) confirm = 0;
     estadisticas.push({
       clave: municipio.clave,
-      nombre: municipio.nombre,
+      nombre: municipio.nombre.slice(0, municipio.nombre.length - 9),
       confirmados: confirm ? confirm.cantidad : confirm
     });
   });
