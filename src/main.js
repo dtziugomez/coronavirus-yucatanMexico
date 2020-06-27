@@ -9833,17 +9833,22 @@ const municipiosData = [
 const municipios = municipiosData.filter(municipio =>
   municipio.nombre.includes("Yucatan")
 );
+
 Apify.main(async () => {
   const res = {};
   res.State = {};
 
   const confirmados = [];
   const confirmadosxMunicipio = [];
+  const defunciones = [];
+  const defuncionesxMunicipio = [];
+  const sospechosos = [];
+  const sospechososxMunicipio = [];
 
   const kvStore = await Apify.openKeyValueStore("COVID-19-MEXICO");
   const dataset = await Apify.openDataset("COVID-19-MEXICO-HISTORY");
 
-  // Find total
+  // confirmados
   const infectedOptions = {
     method: "POST",
     uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
@@ -9853,18 +9858,46 @@ Apify.main(async () => {
       sPatType: "Confirmados"
     }
   };
-
+  //defunciones
+  const deceasedOptions = {
+    method: "POST",
+    uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
+    form: {
+      cve: "31",
+      nom: "Yucatan",
+      sPatType: "Defunciones"
+    }
+  };
+  //sospechosos
+  const suspectOptions = {
+    method: "POST",
+    uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
+    form: {
+      cve: "31",
+      nom: "Yucatan",
+      sPatType: "Sospechosos"
+    }
+  };
+//confirmados
   const parsedBody = await rp(infectedOptions);
   const stripped = parsedBody.replace("<script>", "").replace("</script>", "");
   const statements = stripped.split(";");
+//defunciones
+  const parsedBody2 = await rp(deceasedOptions);
+  const stripped2 = parsedBody2.replace("<script>", "").replace("</script>", "");
+  const statements2 = stripped2.split(";");
+  //sospechosos
+  const parsedBody3 = await rp(suspectOptions);
+  const stripped3 = parsedBody3
+    .replace("<script>", "")
+    .replace("</script>", "");
+  const statements3 = stripped3.split(";");
 
+  //confirmados
   for (let i = 1; i < statements.length; i++) {
     const st = statements[i];
-
     const TotalMun = /TotalMun/;
-
     const ATotalMun = TotalMun.exec(st);
-
     if (ATotalMun != null) {
       confirmados.push(ATotalMun);
     }
@@ -9884,6 +9917,56 @@ Apify.main(async () => {
         .slice(18, municipio["input"].toString().length)
     });
   });
+//defunciones
+  for (let i = 1; i < statements2.length; i++) {
+    const st = statements2[i];
+    const TotalMun = /TotalMun/;
+    const ATotalMun = TotalMun.exec(st);
+    if (ATotalMun != null) {
+      defunciones.push(ATotalMun);
+    }
+  }
+  defunciones.shift();
+  defunciones.pop();
+  defunciones.forEach(municipio => {
+    defuncionesxMunicipio.push({
+      clave: municipio["input"]
+        .toString()
+        .trim()
+        .slice(10, 16)
+        .replace("'", ""),
+      cantidad: municipio["input"]
+        .toString()
+        .trim()
+        .slice(18, municipio["input"].toString().length)
+    });
+  });
+//sospechosos
+  
+  for (let i = 1; i < statements3.length; i++) {
+    const st = statements3[i];
+    const TotalMun = /TotalMun/;
+    const ATotalMun = TotalMun.exec(st);
+    if (ATotalMun != null) {
+      sospechosos.push(ATotalMun);
+    }
+  }
+  sospechosos.shift();
+  sospechosos.pop();
+  sospechosos.forEach(municipio => {
+    sospechososxMunicipio.push({
+      clave: municipio["input"]
+        .toString()
+        .trim()
+        .slice(10, 16)
+        .replace("'", ""),
+      cantidad: municipio["input"]
+        .toString()
+        .trim()
+        .slice(18, municipio["input"].toString().length)
+    });
+  });
+
 
   const estadisticas = [];
 
@@ -9891,17 +9974,25 @@ Apify.main(async () => {
     let confirm = confirmadosxMunicipio.find(
       elemento => elemento.clave === municipio.clave
     );
+    let deceased = defuncionesxMunicipio.find(
+      elemento => elemento.clave === municipio.clave
+    );
+    let suspect = sospechososxMunicipio.find(
+      elemento => elemento.clave === municipio.clave
+    );
     if (!confirm) confirm = 0;
+    if (!deceased) deceased = 0;
+    if (!suspect) suspect = 0;
     estadisticas.push({
       clave: municipio.clave,
       nombre: municipio.nombre.slice(0, municipio.nombre.length - 9),
-      confirmados: confirm ? confirm.cantidad : confirm
+      confirmados: confirm ? confirm.cantidad : confirm,
+      defunciones: deceased ? deceased.cantidad : deceased,
+      sospechosos:suspect?suspect.cantidad:suspect
     });
   });
 
-  // try to discover updated date
-
-  // validate result
+  
   res.State = estadisticas;
   await Apify.setValue("LATEST", res);
   await kvStore.setValue("LATEST", res);
