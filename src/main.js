@@ -9848,10 +9848,10 @@ Apify.main(async () => {
   const kvStore = await Apify.openKeyValueStore("COVID-19-MEXICO");
   const dataset = await Apify.openDataset("COVID-19-MEXICO-HISTORY");
 
-  // confirmados
+  // 
   const infectedOptions = {
     method: "POST",
-    uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
+    uri: "https://datos.covid-19.conacyt.mx/Overview/info/getInfo.php",
     form: {
       cve: "31",
       nom: "Yucatan",
@@ -9861,7 +9861,7 @@ Apify.main(async () => {
   //defunciones
   const deceasedOptions = {
     method: "POST",
-    uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
+    uri: "https://datos.covid-19.conacyt.mx/Overview/info/getInfo.php",
     form: {
       cve: "31",
       nom: "Yucatan",
@@ -9871,7 +9871,7 @@ Apify.main(async () => {
   //sospechosos
   const suspectOptions = {
     method: "POST",
-    uri: "https://coronavirus.gob.mx/datos/Overview/info/getInfo.php",
+    uri: "https://datos.covid-19.conacyt.mx/Overview/info/getInfo.php",
     form: {
       cve: "31",
       nom: "Yucatan",
@@ -9998,4 +9998,5 @@ Apify.main(async () => {
   await kvStore.setValue("LATEST", res);
   await dataset.pushData(res);
   console.log(res);
+  
 });
